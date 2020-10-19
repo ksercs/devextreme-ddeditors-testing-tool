@@ -7,3 +7,5 @@
 3. Click on `Widgets` block buttons to select the widget
 4. Click on `Cases` block buttons to start run a specific case
 5. Enjoy
+
+![image](./preview.png)
