@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DropDownEditors testing tool</title>
+
+    <link rel="stylesheet" type="text/css" href="../artifacts/css/dx.common.css"/>
+
+    <link rel="stylesheet" type="text/css" href="../artifacts/css/dx.light.css"/>
+
+    <script type="text/javascript" src="../artifacts/js/jquery.js"></script>
+
+    <!--<script type="text/javascript" src="../artifacts/js/cldr.js"></script>
+    <script type="text/javascript" src="../artifacts/js/cldr/event.js"></script>
+    <script type="text/javascript" src="../artifacts/js/cldr/supplemental.js"></script>
+    <script type="text/javascript" src="../artifacts/js/cldr/unresolved.js"></script>
+    <script type="text/javascript" src="../artifacts/js/globalize.js"></script>
+    <script type="text/javascript" src="../artifacts/js/globalize/message.js"></script>
+    <script type="text/javascript" src="../artifacts/js/globalize/number.js"></script>
+    <script type="text/javascript" src="../artifacts/js/globalize/currency.js"></script>
+    <script type="text/javascript" src="../artifacts/js/globalize/date.js"></script>-->
+
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/3.3.1/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.2/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.2/jszip.min.js"></script> -->
+
+    <script type="text/javascript" src="../artifacts/js/dx.all.debug.js" charset="utf-8"></script>
+</head>
+<body>
+    <div id="container" style="height: 100px; position: absolute;"></div>
+    <div id="dynamicContainer" style="height: 35%; position: absolute;"></div>
+    Widgets:
+    <div id='widgets' style="padding-top: 10px"></div>
+    <br>
+    <div id='widgets_specific'></div>
+    <br>
+    Cases:
+    <div id='cases' style="padding-top: 10px"></div>
+    
+    <br>
+    <div id='expected_result' style="margin-bottom: 10px"></div>
+    <div id="editor"></div>
+
+    <script>
+        $(function() {
+            let selectedWidget = null;
+            let widgetSpecificOptions = {};
+            let editor = null;
+
+            const initCases = () => {
+                cases.forEach(({name, options, expected_result}) => {
+                    $('<div>')
+                        .css({ margin: '5px'})
+                        .dxButton({
+                            text: name,
+                            onClick: () => {
+                                $('#expected_result').text(`Expected result: ${expected_result}`);
+
+                                editor?.dispose();
+                                editor = $('#editor')[selectedWidget]
+                                            (Object.assign(options, widgetSpecificOptions, { opened: true }))
+                                            [selectedWidget]('instance'); 
+                                
+                                if (name === 'ddo.height runtime change') {
+                                    setTimeout(() => {
+                                        editor.option('dropDownOptions.height', 400);
+                                    }, 2000);
+                                }
+                            }
+                        }).appendTo('#cases');
+                });
+            };
+
+            const addWidgetSpecific = (text, options) => {
+                $('<div>')
+                    .css({ margin: '5px'})
+                    .dxButton({
+                        text,
+                        onClick: () => {
+                            clear();
+                            widgetSpecificOptions = options;
+                            initCases();
+                        }
+                    }).appendTo('#widgets_specific');
+            };
+
+            const clear = () => {
+                editor?.dispose();
+                $('#cases').empty();
+                $('#expected_result').empty();
+            }
+
+            widgets.forEach(name => {
+                $('<div>')
+                    .css({ margin: '5px'})
+                    .dxButton({
+                        text: name,
+                        onClick: () => {
+                            clear();
+                            $('#widgets_specific').empty();
+
+                            selectedWidget = name;
+                            if (selectedWidget === 'dxDateBox') {
+                                addWidgetSpecific('With List', { type: 'time' });
+                                addWidgetSpecific('With Calendar', { type: 'date' });
+                            }
+                            else if (selectedWidget === 'dxLookup') {
+                                addWidgetSpecific('With Popover', { usePopover: true });
+                                addWidgetSpecific('With Popup', { usePopover: false });
+                            } else {
+                                if (selectedWidget === 'dxDropDownBox') {
+                                    widgetSpecificOptions = {
+                                        contentTemplate: () => $('<div>').css({ width: 200, height: 200})
+                                    };
+                                }
+                                initCases();
+                            }
+                        }
+                }).appendTo('#widgets');
+            });
+        });
+
+        const widgets = ['dxSelectBox', 'dxTagBox', 'dxAutocomplete', 'dxDateBox', 'dxLookup', 'dxColorBox', 'dxDropDownBox', 'dxDropDownButton'];
+        const cases = [
+            {
+                name: 'height=200, containerHeight=100, ddo.height not specified',
+                options: {
+                    height: 200,
+                    dropDownOptions: {
+                        container: '#container'
+                    }
+                },
+                expected_result: 'content height'
+            },
+            {
+                name: 'height=200, containerHeight=100, ddo.height = auto',
+                options: {
+                    height: 200,
+                    dropDownOptions: {
+                        height: 'auto',
+                        container: '#container'
+                    }
+                },
+                expected_result: 'content height'
+            },
+            {
+                name: 'height=200, containerHeight=100, ddo.height = 100%',
+                options: {
+                    height: 200,
+                    dropDownOptions: {
+                        height: '100%',
+                        container: '#container'
+                    }
+                },
+                expected_result: 'wrapper height'
+            },
+            {
+                name: 'height=200, containerHeight=100, ddo.height = 300',
+                options: {
+                    height: 200,
+                    dropDownOptions: {
+                        height: 300,
+                        container: '#container'
+                    }
+                },
+                expected_result: 'ddo.height'
+            },
+
+            {
+                name: 'height=200, containerHeight=100, ddo.height = 30',
+                options: {
+                    height: 200,
+                    dropDownOptions: {
+                        height: 30,
+                        container: '#container'
+                    }
+                },
+                expected_result: 'ddo.height'
+            },
+            {
+                name: 'height=200, containerHeight=100, ddo.height = 150%',
+                options: {
+                    height: 200,
+                    dropDownOptions: {
+                        height: '150%',
+                        container: '#container'
+                    }
+                },
+                expected_result: '150% of wrapper = 450'
+            },
+            {
+                name: 'height=200, containerHeight=100, ddo.height = 50%',
+                options: {
+                    height: 200,
+                    dropDownOptions: {
+                        height: '50%',
+                        container: '#container'
+                    }
+                },
+                expected_result: '50% of wrapper = 150'
+            },
+            {
+                name: 'height = 100%, ddo.height = 50%, window resize',
+                options: {
+                    dropDownOptions: {
+                        container: '#dynamicContainer',
+                        height: '50%'
+                    }
+                },
+                expected_result: 'window resize'
+            },
+            {
+                name: 'ddo.height runtime change',
+                options: {
+                    height: 200,
+                    dropDownOptions: {
+                        height: 100
+                    }
+                },
+                expected_result: 'ddo.height changed to 400'
+            },
+        ];
+    </script>
+</body>
+</html>
